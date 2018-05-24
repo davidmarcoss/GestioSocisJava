@@ -11,7 +11,6 @@ import java.awt.Image;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -31,11 +30,9 @@ import java.sql.SQLException;
 import javax.sql.rowset.serial.SerialBlob;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class MainFrame extends javax.swing.JFrame
 {
-
     private IBillar billar = null;
     private List<Soci> socis;
     private Soci soci = null;
@@ -69,21 +66,20 @@ public class MainFrame extends javax.swing.JFrame
             }
         });
 
-        Connexio();
+        GetConnexio();
     }
 
-    private void Connexio()
+    private void GetConnexio()
     {
         try {
             billar = BillarFactory.getInstance("info.infomila.billar.persistence.Billar", "UP-MySQL");
             populateTaula();
         } catch (BillarException ex) {
-            ex.printStackTrace();
             try {
                 if (billar != null) {
                     billar.close();
                 }
-                int i = JOptionPane.showConfirmDialog(rootPane,
+                int result = JOptionPane.showConfirmDialog(rootPane,
                         "No s'ha pogut establir connexió amb el origen de dades, l'aplicació s'abortarà",
                         "Error",
                         JOptionPane.DEFAULT_OPTION,
@@ -491,7 +487,7 @@ public class MainFrame extends javax.swing.JFrame
                     System.out.println(ex);
                     dispose();
                 } catch (BillarException ex1) {
-                    JOptionPane.showMessageDialog(null, "ex1");
+                    JOptionPane.showMessageDialog(null, ex1);
                 }
             }
         } else if (soci != null) {
@@ -547,10 +543,16 @@ public class MainFrame extends javax.swing.JFrame
 
     private void BtnCancelarMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnCancelarMouseClicked
     {//GEN-HEADEREND:event_BtnCancelarMouseClicked
-        if (soci != null) {
-            populateForm();
-        } else {
-            resetForm();
+        int result = JOptionPane.showConfirmDialog(rootPane,
+            "Estàs segur que vols cancelar la edició del soci?",
+            "Cancelar edició",
+            JOptionPane.YES_NO_OPTION);
+        if (result == JOptionPane.YES_OPTION) {
+            if (soci != null) {
+                populateForm();
+            } else {
+                resetForm();
+            }
         }
     }//GEN-LAST:event_BtnCancelarMouseClicked
 

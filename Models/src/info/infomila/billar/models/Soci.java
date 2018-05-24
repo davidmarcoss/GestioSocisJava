@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Basic;
@@ -105,7 +107,7 @@ public class Soci implements Serializable
 
     public final void setNif(String nif)
     {
-        if (nif == null || nif.length() < 9) {
+        if (!validarNIF(nif)) {
             throw new SociException("El NIF es obligatori i ha de tindre una longitud de 8 dígits i 1 caràcter.");
         }
         this.nif = nif;
@@ -208,6 +210,34 @@ public class Soci implements Serializable
     public String toString()
     {
         return "Soci{" + "id=" + id + ", nif=" + nif + ", nom=" + nom + ", cognom1=" + cognom1 + ", cognom2=" + cognom2 + ", actiu=" + actiu + '}';
+    }
+
+    private boolean validarNIF(String nif)
+    {
+        boolean correcto = false;
+        Pattern pattern = Pattern.compile("(\\d{1,8})([TRWAGMYFPDXBNJZSQVHLCKEtrwagmyfpdxbnjzsqvhlcke])");
+        Matcher matcher = pattern.matcher(nif);
+
+        if (matcher.matches()) {
+
+            String letra = matcher.group(2);
+            String letras = "TRWAGMYFPDXBNJZSQVHLCKE";
+
+            int index = Integer.parseInt(matcher.group(1));
+            index = index % 23;
+
+            String reference = letras.substring(index, index + 1);
+            if (reference.equalsIgnoreCase(letra)) {
+                correcto = true;
+            } else {
+                correcto = false;
+            }
+
+        } else {
+            correcto = false;
+        }
+
+        return correcto;
     }
 
     @Override
