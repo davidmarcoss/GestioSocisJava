@@ -1,43 +1,44 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package info.infomila.billar.ui;
 
 import info.infomila.billar.ipersistence.BillarException;
 import info.infomila.billar.ipersistence.BillarFactory;
 import info.infomila.billar.ipersistence.IBillar;
+import info.infomila.billar.models.EstadisticaModalitat;
 import info.infomila.billar.models.Soci;
+import info.infomila.billar.models.SociException;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.Blob;
+import java.sql.SQLException;
+import javax.sql.rowset.serial.SerialBlob;
+import javax.swing.Icon;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
-/**
- *
- * @author David
- */
 public class MainFrame extends javax.swing.JFrame
 {
 
     private IBillar billar = null;
     private List<Soci> socis;
-    private Soci soci;
-    private ImageIcon lastFoto;
+    private Soci soci = null;
 
     /**
      * Creates new form Main
@@ -53,7 +54,10 @@ public class MainFrame extends javax.swing.JFrame
             @Override
             public void windowClosing(WindowEvent e)
             {
-                int i = JOptionPane.showConfirmDialog(null, "Estás segur que vols sortir?");
+                int i = JOptionPane.showConfirmDialog(rootPane,
+                        "Estás segur que vols sortir?",
+                        "Sortir",
+                        JOptionPane.YES_NO_OPTION);
                 if (i == JOptionPane.YES_OPTION) {
                     try {
                         billar.close();
@@ -65,34 +69,80 @@ public class MainFrame extends javax.swing.JFrame
             }
         });
 
+        Connexio();
+    }
+
+    private void Connexio()
+    {
         try {
             billar = BillarFactory.getInstance("info.infomila.billar.persistence.Billar", "UP-MySQL");
-            omplirTaula();
+            populateTaula();
         } catch (BillarException ex) {
-            System.out.println(ex);
+            ex.printStackTrace();
             try {
-                billar.close();
-                dispose();
+                if (billar != null) {
+                    billar.close();
+                }
+                int i = JOptionPane.showConfirmDialog(rootPane,
+                        "No s'ha pogut establir connexió amb el origen de dades, l'aplicació s'abortarà",
+                        "Error",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.PLAIN_MESSAGE);
+
+                System.exit(0);
             } catch (BillarException ex1) {
-                System.out.println(ex1);
+                System.exit(0);
             }
         }
     }
 
-    private void omplirTaula() throws BillarException
+    private void populateTaula() throws BillarException
     {
         socis = billar.getSocis();
 
         DefaultTableModel model = (DefaultTableModel) TaulaSocis.getModel();
         model.setRowCount(0);
-        socis.forEach((soci) -> {
+
+        socis.forEach((Soci s) -> {
+            String cognom = s.getCognom1() != null ? s.getCognom1() : "";
+            String cognom2 = s.getCognom2() != null ? s.getCognom2() : "";
             model.addRow(new Object[]{
-                soci.getNif(),
-                soci.getNom() + " " + soci.getCognom1() + " " + soci.getCognom2(),
-                soci.getDataAltaString(),
-                soci.isActiu()
+                s.getNif(),
+                s.getNom() + " " + cognom + " " + cognom2,
+                s.getDataAltaString(),
+                s.isActiu()
             });
         });
+    }
+
+    private void resetForm()
+    {
+        LabelFoto.setIcon(null);
+        InputNIF.setText("");
+        InputNom.setText("");
+        InputCognom.setText("");
+        InputCognom2.setText("");
+        InputPassword.setText("");
+        CheckBoxActiu.setSelected(false);
+    }
+
+    private void populateForm()
+    {
+        InputNIF.setText(soci.getNif());
+        InputNom.setText(soci.getNom());
+        InputCognom.setText(soci.getCognom1());
+        InputCognom2.setText(soci.getCognom2());
+        CheckBoxActiu.setSelected(soci.isActiu());
+        if (soci.getFoto() != null) {
+            BlobToLabel(soci.getFoto());
+        } else {
+            LabelFoto.setIcon(null);
+        }
+        ComboBoxModalitats.removeAllItems();
+        Iterator<EstadisticaModalitat> it = soci.iteEstadistiques();
+        while (it.hasNext()) {
+            ComboBoxModalitats.addItem(it.next().toString());
+        }
     }
 
     /**
@@ -120,19 +170,19 @@ public class MainFrame extends javax.swing.JFrame
         jLabel8 = new javax.swing.JLabel();
         ComboBoxModalitats = new javax.swing.JComboBox<>();
         jLabel9 = new javax.swing.JLabel();
-        jTextField5 = new javax.swing.JTextField();
+        InputCoeficient = new javax.swing.JTextField();
         BtnCrear = new javax.swing.JButton();
         BtnGuardar = new javax.swing.JButton();
         BtnCancelar = new javax.swing.JButton();
-        BtnEliminar = new javax.swing.JButton();
         BtnCambiarFoto = new javax.swing.JButton();
         BtnEliminarFoto = new javax.swing.JButton();
-        jTextField6 = new javax.swing.JTextField();
+        InputCaramboles = new javax.swing.JTextField();
         jLabel10 = new javax.swing.JLabel();
-        jTextField7 = new javax.swing.JTextField();
+        InputEntrades = new javax.swing.JTextField();
         jLabel11 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         TaulaSocis = new javax.swing.JTable();
+        CheckBoxActiu = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -153,9 +203,17 @@ public class MainFrame extends javax.swing.JFrame
 
         jLabel8.setText("Modalitats");
 
-        ComboBoxModalitats.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        ComboBoxModalitats.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                ComboBoxModalitatsActionPerformed(evt);
+            }
+        });
 
         jLabel9.setText("Coeficient");
+
+        InputCoeficient.setEditable(false);
 
         BtnCrear.setText("Crear");
         BtnCrear.addMouseListener(new java.awt.event.MouseAdapter()
@@ -176,14 +234,37 @@ public class MainFrame extends javax.swing.JFrame
         });
 
         BtnCancelar.setText("Cancelar");
-
-        BtnEliminar.setText("Eliminar");
+        BtnCancelar.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                BtnCancelarMouseClicked(evt);
+            }
+        });
 
         BtnCambiarFoto.setText("Cambiar");
+        BtnCambiarFoto.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                BtnCambiarFotoMouseClicked(evt);
+            }
+        });
 
         BtnEliminarFoto.setText("Eliminar");
+        BtnEliminarFoto.addMouseListener(new java.awt.event.MouseAdapter()
+        {
+            public void mouseClicked(java.awt.event.MouseEvent evt)
+            {
+                BtnEliminarFotoMouseClicked(evt);
+            }
+        });
+
+        InputCaramboles.setEditable(false);
 
         jLabel10.setText("Caramboles Temporada");
+
+        InputEntrades.setEditable(false);
 
         jLabel11.setText("Entrades Temporada");
 
@@ -229,6 +310,8 @@ public class MainFrame extends javax.swing.JFrame
         });
         jScrollPane2.setViewportView(TaulaSocis);
 
+        CheckBoxActiu.setText("Actiu");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -237,20 +320,12 @@ public class MainFrame extends javax.swing.JFrame
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(247, 247, 247)
-                                .addComponent(BtnCrear)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(BtnEliminar))
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 436, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 436, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(BtnCrear))
                         .addGap(26, 26, 26)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(BtnGuardar)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(BtnCancelar))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(LabelFoto, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
@@ -258,31 +333,39 @@ public class MainFrame extends javax.swing.JFrame
                                     .addComponent(BtnCambiarFoto)
                                     .addComponent(BtnEliminarFoto)))
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                    .addComponent(InputPassword, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(InputNom, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(InputCognom, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(InputCognom2, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(InputNIF, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(ComboBoxModalitats, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                        .addComponent(InputPassword, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(InputNom, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(InputCognom, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(InputCognom2, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(InputNIF, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(ComboBoxModalitats, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(BtnGuardar)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(BtnCancelar)))
                                 .addGap(18, 18, 18)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel9)
-                                    .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel10)
-                                    .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel11)
-                                    .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(0, 8, Short.MAX_VALUE))
+                                    .addComponent(CheckBoxActiu)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel9)
+                                            .addComponent(InputCoeficient, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(18, 18, 18)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel10)
+                                            .addComponent(InputCaramboles, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(18, 18, 18)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel11)
+                                            .addComponent(InputEntrades, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                        .addGap(0, 2, Short.MAX_VALUE))
                     .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -331,22 +414,22 @@ public class MainFrame extends javax.swing.JFrame
                                 .addGroup(layout.createSequentialGroup()
                                     .addComponent(jLabel9)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                    .addComponent(InputCoeficient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel11)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(InputEntrades, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel10)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addComponent(InputCaramboles, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 415, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(BtnEliminar)
                     .addComponent(BtnGuardar)
                     .addComponent(BtnCancelar)
+                    .addComponent(CheckBoxActiu)
                     .addComponent(BtnCrear, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -359,59 +442,197 @@ public class MainFrame extends javax.swing.JFrame
         int rowIndex = TaulaSocis.getSelectedRow();
         if (rowIndex >= 0) {
             soci = socis.get(rowIndex);
-
-            InputNIF.setText(soci.getNif());
-            InputNom.setText(soci.getNom());
-            InputCognom.setText(soci.getCognom1());
-            InputCognom2.setText(soci.getCognom2());
-            /*if (soci.getFoto() != null) {
-                BufferedImage image = null;
-                System.out.println(soci.getFoto());
-                try {
-                    image = ImageIO.read(new ByteArrayInputStream(soci.getFoto()));
-                    LabelFoto.setIcon(new ImageIcon(image));
-                    lastFoto = (ImageIcon) LabelFoto.getIcon();
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(this, "Error el carregar la foto", "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            } else {
-                
-            }*/
+            populateForm();
         }
     }//GEN-LAST:event_TaulaSocisMouseClicked
 
     private void BtnGuardarMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnGuardarMouseClicked
     {//GEN-HEADEREND:event_BtnGuardarMouseClicked
-        if (soci == null) {
-            
-        } else if (soci != null) {
-            soci.setNif(InputNIF.getText());
-            soci.setNom(InputNom.getText());
-            soci.setCognom1(InputCognom.getText());
-            soci.setCognom2(InputCognom2.getText());
+        String nif = InputNIF.getText();
+        String nom = InputNom.getText();
+        String cognom = InputCognom.getText();
+        String cognom2 = InputCognom2.getText();
+        boolean actiu = CheckBoxActiu.isSelected();
+        Icon icon = LabelFoto.getIcon();
+        Blob foto = null;
+        if (icon != null) {
+            foto = ImageToBlob(iconToImage(icon));
+        }
+        String passwordmd5 = InputPassword.getText();
+        if (passwordmd5 != null && !"".equals(passwordmd5)) {
+            MessageDigest dg;
+
             try {
-                billar.updateSoci(soci);
-                omplirTaula();
-            } catch (BillarException ex) {
-                System.out.println(ex);
-                dispose();
+                dg = MessageDigest.getInstance("MD5");
+                dg.update(passwordmd5.getBytes());
+
+                BigInteger hash = new BigInteger(1, dg.digest());
+
+                passwordmd5 = hash.toString(16);
+                while (passwordmd5.length() < 32) {
+                    passwordmd5 = "0" + passwordmd5;
+                }
+            } catch (NoSuchAlgorithmException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
             }
         }
+
+        if (soci == null) {
+            Soci newSoci = new Soci(nif, nom, cognom, cognom2, passwordmd5, foto, actiu);
+            soci = newSoci;
+            try {
+                billar.updateSoci(soci);
+                billar.commit();
+                populateTaula();
+                JOptionPane.showMessageDialog(null, "Soci inserit correctament.");
+            } catch (BillarException ex) {
+                try {
+                    billar.rollback();
+                    System.out.println(ex);
+                    dispose();
+                } catch (BillarException ex1) {
+                    JOptionPane.showMessageDialog(null, "ex1");
+                }
+            }
+        } else if (soci != null) {
+            try {
+                soci.setFoto(foto);
+                soci.setNif(InputNIF.getText());
+                soci.setNom(InputNom.getText());
+                soci.setCognom1(InputCognom.getText());
+                soci.setCognom2(InputCognom2.getText());
+                soci.setActiu(CheckBoxActiu.isSelected());
+                if (passwordmd5 != null && !"".equals(passwordmd5)) {
+                    soci.setPasswordHash(passwordmd5);
+                }
+
+                try {
+                    billar.updateSoci(soci);
+                    billar.commit();
+                    populateTaula();
+                    JOptionPane.showMessageDialog(null, "Soci modificat correctament.");
+                } catch (BillarException ex) {
+                    try {
+                        billar.rollback();
+                        System.out.println(ex);
+                        dispose();
+                    } catch (BillarException ex1) {
+                        JOptionPane.showMessageDialog(null, "ex1");
+                    }
+                }
+            } catch (SociException sociException) {
+                JOptionPane.showMessageDialog(null, sociException.getMessage());
+            }
+        }
+
+        InputPassword.setText("");
     }//GEN-LAST:event_BtnGuardarMouseClicked
 
     private void BtnCrearMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnCrearMouseClicked
     {//GEN-HEADEREND:event_BtnCrearMouseClicked
         soci = null;
+        resetForm();
+        TaulaSocis.clearSelection();
     }//GEN-LAST:event_BtnCrearMouseClicked
 
-    private static BufferedImage resize(BufferedImage img, int height, int width)
+    private void ComboBoxModalitatsActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_ComboBoxModalitatsActionPerformed
+    {//GEN-HEADEREND:event_ComboBoxModalitatsActionPerformed
+        int row = ComboBoxModalitats.getSelectedIndex();
+        if (row >= 0 && soci != null) {
+            InputCoeficient.setText(soci.getEstadisticaByIndex(row).getCoeficientBase() + "");
+            InputCaramboles.setText(soci.getEstadisticaByIndex(row).getCarambolesTemporadaActual() + "");
+            InputEntrades.setText(soci.getEstadisticaByIndex(row).getEntradesTemporadaActual() + "");
+        }
+    }//GEN-LAST:event_ComboBoxModalitatsActionPerformed
+
+    private void BtnCancelarMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnCancelarMouseClicked
+    {//GEN-HEADEREND:event_BtnCancelarMouseClicked
+        if (soci != null) {
+            populateForm();
+        } else {
+            resetForm();
+        }
+    }//GEN-LAST:event_BtnCancelarMouseClicked
+
+    private void BtnCambiarFotoMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnCambiarFotoMouseClicked
+    {//GEN-HEADEREND:event_BtnCambiarFotoMouseClicked
+        JFileChooser fc = new JFileChooser();
+        if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+            MostrarImatgeLabel(file);
+        }
+    }//GEN-LAST:event_BtnCambiarFotoMouseClicked
+
+    private void BtnEliminarFotoMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnEliminarFotoMouseClicked
+    {//GEN-HEADEREND:event_BtnEliminarFotoMouseClicked
+        if (LabelFoto.getIcon() != null) {
+            LabelFoto.setIcon(null);
+        }
+    }//GEN-LAST:event_BtnEliminarFotoMouseClicked
+
+    public void MostrarImatgeLabel(File file)
     {
-        Image tmp = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-        BufferedImage resized = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = resized.createGraphics();
-        g2d.drawImage(tmp, 0, 0, null);
-        g2d.dispose();
-        return resized;
+        BufferedImage img = null;
+        try {
+            img = ImageIO.read(file);
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+        if (img != null) {
+            Image dimg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+            LabelFoto.setIcon(new ImageIcon(dimg));
+        }
+    }
+
+    public void BlobToLabel(Blob blob)
+    {
+        try {
+            InputStream in;
+
+            in = blob.getBinaryStream();
+            BufferedImage img = ImageIO.read(in);
+            if (img != null) {
+                Image dimg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                LabelFoto.setIcon(new ImageIcon(dimg));
+            }
+        } catch (SQLException | IOException ex) {
+            System.out.println("Error populate imatge");
+        }
+    }
+
+    public Blob ImageToBlob(Image img)
+    {
+        SerialBlob blob = null;
+
+        try {
+            BufferedImage o = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+
+            Graphics2D bGr = o.createGraphics();
+            bGr.drawImage(img, 0, 0, null);
+            bGr.dispose();
+
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            ImageIO.write(o, "jpg", b);
+            b.flush();
+            byte[] byts = b.toByteArray();
+            b.close();
+            blob = new SerialBlob(byts);
+        } catch (IOException | SQLException ex) {
+            System.out.println("");
+        }
+
+        return blob;
+    }
+
+    private Image iconToImage(Icon icon)
+    {
+        if (icon instanceof ImageIcon) {
+            return ((ImageIcon) icon).getImage();
+        } else {
+            BufferedImage image = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+            icon.paintIcon(null, image.getGraphics(), 0, 0);
+            return image;
+        }
     }
 
     /**
@@ -426,7 +647,7 @@ public class MainFrame extends javax.swing.JFrame
          */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
+                if ("Windows".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
                 }
@@ -457,12 +678,15 @@ public class MainFrame extends javax.swing.JFrame
     private javax.swing.JButton BtnCambiarFoto;
     private javax.swing.JButton BtnCancelar;
     private javax.swing.JButton BtnCrear;
-    private javax.swing.JButton BtnEliminar;
     private javax.swing.JButton BtnEliminarFoto;
     private javax.swing.JButton BtnGuardar;
+    private javax.swing.JCheckBox CheckBoxActiu;
     private javax.swing.JComboBox<String> ComboBoxModalitats;
+    private javax.swing.JTextField InputCaramboles;
+    private javax.swing.JTextField InputCoeficient;
     private javax.swing.JTextField InputCognom;
     private javax.swing.JTextField InputCognom2;
+    private javax.swing.JTextField InputEntrades;
     private javax.swing.JTextField InputNIF;
     private javax.swing.JTextField InputNom;
     private javax.swing.JPasswordField InputPassword;
@@ -479,8 +703,5 @@ public class MainFrame extends javax.swing.JFrame
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField6;
-    private javax.swing.JTextField jTextField7;
     // End of variables declaration//GEN-END:variables
 }

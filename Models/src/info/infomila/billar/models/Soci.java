@@ -1,7 +1,7 @@
-
 package info.infomila.billar.models;
 
 import java.io.Serializable;
+import java.sql.Blob;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,7 +27,8 @@ import javax.persistence.Transient;
 @Table(name = "socis")
 public class Soci implements Serializable
 {
-    @Id 
+
+    @Id
     @TableGenerator(name = "gen_soci",
             table = "comptadors",
             pkColumnName = "clau",
@@ -36,45 +37,46 @@ public class Soci implements Serializable
             allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "gen_soci")
     private int id;
-    
+
     @Basic(optional = false)
     @Column(nullable = false, length = 13, unique = true)
     private String nif;
-    
+
     @Basic(optional = false)
     @Column(nullable = false, length = 50)
     private String nom;
-    
+
     @Column(length = 50)
     private String cognom1;
-    
+
     @Column(length = 50)
     private String cognom2;
 
     @Basic(optional = false)
-    @Column(name = "data_alta", nullable = false, length = 50)    
+    @Column(name = "data_alta", nullable = false, length = 50)
     private Date dataAlta;
-    
+
     @Basic(optional = false)
-    @Column(name = "password_hash", nullable = false, length = 32)    
+    @Column(name = "password_hash", nullable = false, length = 32)
     private String passwordHash;
-    
-    @Column()
-    @Lob
-    private byte[] foto;
-    
-    @OneToMany(mappedBy = "emPK.soci", fetch = FetchType.LAZY)
+
+    @Column(columnDefinition = "blob")
+    private Blob foto;
+
+    @OneToMany(mappedBy = "emPK.soci", fetch = FetchType.EAGER)
     private List<EstadisticaModalitat> estadistiques = new ArrayList<>();
-    
+
     @Column()
     private boolean actiu;
-    
+
     @Transient
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
-    protected Soci(){}
+    protected Soci()
+    {
+    }
 
-    public Soci(String nif, String nom, String cognom1, String cognom2, String passwordHash, byte[] foto, boolean actiu)
+    public Soci(String nif, String nom, String cognom1, String cognom2, String passwordHash, Blob foto, boolean actiu)
     {
         setNif(nif);
         setNom(nom);
@@ -85,7 +87,7 @@ public class Soci implements Serializable
         setFoto(foto);
         setActiu(actiu);
     }
-    
+
     public int getId()
     {
         return id;
@@ -103,6 +105,9 @@ public class Soci implements Serializable
 
     public final void setNif(String nif)
     {
+        if (nif == null || nif.length() < 9) {
+            throw new SociException("El NIF es obligatori i ha de tindre una longitud de 8 dígits i 1 caràcter.");
+        }
         this.nif = nif;
     }
 
@@ -113,6 +118,9 @@ public class Soci implements Serializable
 
     public final void setNom(String nom)
     {
+        if (nom == null || nom.length() < 3) {
+            throw new SociException("El nom es obligatori i ha de tindre un mínim de 2 caràcters.");
+        }
         this.nom = nom;
     }
 
@@ -145,7 +153,7 @@ public class Soci implements Serializable
     {
         this.dataAlta = dataAlta;
     }
-    
+
     public String getDataAltaString()
     {
         return sdf.format(dataAlta);
@@ -161,12 +169,12 @@ public class Soci implements Serializable
         this.passwordHash = passwordHash;
     }
 
-    public byte[] getFoto()
+    public Blob getFoto()
     {
         return foto;
     }
 
-    public final void setFoto(byte[] foto)
+    public final void setFoto(Blob foto)
     {
         this.foto = foto;
     }
@@ -176,17 +184,14 @@ public class Soci implements Serializable
         return estadistiques.iterator();
     }
 
+    public EstadisticaModalitat getEstadisticaByIndex(int index)
+    {
+        return estadistiques.get(index);
+    }
+
     private final void setEstadistiques(List<EstadisticaModalitat> estadistiques)
     {
         this.estadistiques = estadistiques;
-    }
-    
-    public void addEstadistica(EstadisticaModalitat estadistica)
-    {
-        if (!this.estadistiques.contains(estadistica))
-        {
-            this.estadistiques.add(estadistica);
-        }
     }
 
     public boolean isActiu()
@@ -204,8 +209,7 @@ public class Soci implements Serializable
     {
         return "Soci{" + "id=" + id + ", nif=" + nif + ", nom=" + nom + ", cognom1=" + cognom1 + ", cognom2=" + cognom2 + ", actiu=" + actiu + '}';
     }
-    
-    
+
     @Override
     public int hashCode()
     {
@@ -231,5 +235,5 @@ public class Soci implements Serializable
             return false;
         }
         return true;
-    }    
+    }
 }

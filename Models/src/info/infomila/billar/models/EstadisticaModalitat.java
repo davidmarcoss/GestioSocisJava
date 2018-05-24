@@ -113,6 +113,10 @@ public class EstadisticaModalitat implements Serializable
         final EstadisticaModalitat other = (EstadisticaModalitat) obj;
         return Objects.equals(this.emPK, other.emPK);
     }
-    
-    
+
+    @Override
+    public String toString()
+    {
+        return emPK.toString();
+    }
 }

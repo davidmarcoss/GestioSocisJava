@@ -55,8 +55,6 @@ public class Billar implements IBillar
         }
 
         entityManager.merge(soci);
-
-        commit();
     }
 
     @Override
@@ -69,8 +67,6 @@ public class Billar implements IBillar
         soci.setActiu(false);
 
         entityManager.merge(soci);
-
-        commit();
     }
 
     @Override

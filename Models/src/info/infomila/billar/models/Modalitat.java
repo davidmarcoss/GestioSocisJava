@@ -88,4 +88,12 @@ public class Modalitat implements Serializable
         final Modalitat other = (Modalitat) obj;
         return this.id == other.id;
     }
+
+    @Override
+    public String toString()
+    {
+        return descripcio;
+    }
+    
+    
 }

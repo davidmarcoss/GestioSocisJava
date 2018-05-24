@@ -81,6 +81,10 @@ public class EstadisticaModalitatPK implements Serializable
         }
         return Objects.equals(this.modalitat, other.modalitat);
     }
-    
-    
+
+    @Override
+    public String toString()
+    {
+        return modalitat.toString();
+    }
 }
