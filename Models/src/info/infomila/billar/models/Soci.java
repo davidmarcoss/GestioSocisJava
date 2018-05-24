@@ -70,7 +70,7 @@ public class Soci implements Serializable
     private boolean actiu;
     
     @Transient
-    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
     protected Soci(){}
 
@@ -144,6 +144,11 @@ public class Soci implements Serializable
     protected final void setDataAlta(Date dataAlta)
     {
         this.dataAlta = dataAlta;
+    }
+    
+    public String getDataAltaString()
+    {
+        return sdf.format(dataAlta);
     }
 
     public String getPasswordHash()
