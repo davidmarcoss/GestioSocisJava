@@ -13,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -27,12 +28,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Blob;
 import java.sql.SQLException;
+import java.util.Properties;
 import javax.sql.rowset.serial.SerialBlob;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
 
 public class MainFrame extends javax.swing.JFrame
 {
+    private String className;
+    private String nomUnitatPersistencia;
     private IBillar billar = null;
     private List<Soci> socis;
     private Soci soci = null;
@@ -66,13 +70,52 @@ public class MainFrame extends javax.swing.JFrame
             }
         });
 
+        ObtenirPropietats();
+        
         GetConnexio();
+    }
+    
+    private void ObtenirPropietats() 
+    {
+        Properties p = new Properties();
+        try {
+            p.load(new FileInputStream("propietats.properties"));
+        } catch (IOException ex) {
+            int result = JOptionPane.showConfirmDialog(rootPane,
+                   "No s'ha pogut llegir el fitxer de propietats, l'aplicació s'abortarà",
+                   "Error",
+                   JOptionPane.DEFAULT_OPTION,
+                   JOptionPane.PLAIN_MESSAGE);
+
+           System.exit(0);
+        }
+        
+        className = p.getProperty("className");
+        if (className == null || className.length() == 0) {
+            int result = JOptionPane.showConfirmDialog(rootPane,
+                   "No s'ha pogut llegir la propietat className del fitxer de propietats, l'aplicació s'abortarà",
+                   "Error",
+                   JOptionPane.DEFAULT_OPTION,
+                   JOptionPane.PLAIN_MESSAGE);
+
+           System.exit(0);
+        }
+        nomUnitatPersistencia = p.getProperty("nomUnitatPersistencia");
+        if (nomUnitatPersistencia == null || nomUnitatPersistencia.length() == 0) {
+            int result = JOptionPane.showConfirmDialog(rootPane,
+                   "No s'ha pogut llegir la propietat nomUnitatPersistencia del fitxer de propietats, l'aplicació s'abortarà",
+                   "Error",
+                   JOptionPane.DEFAULT_OPTION,
+                   JOptionPane.PLAIN_MESSAGE);
+
+           System.exit(0);
+        }
     }
 
     private void GetConnexio()
     {
         try {
-            billar = BillarFactory.getInstance("info.infomila.billar.persistence.Billar", "UP-MySQL");
+            billar = BillarFactory.getInstance(className, nomUnitatPersistencia);
             populateTaula();
         } catch (BillarException ex) {
             try {
@@ -538,6 +581,10 @@ public class MainFrame extends javax.swing.JFrame
             InputCoeficient.setText(soci.getEstadisticaByIndex(row).getCoeficientBase() + "");
             InputCaramboles.setText(soci.getEstadisticaByIndex(row).getCarambolesTemporadaActual() + "");
             InputEntrades.setText(soci.getEstadisticaByIndex(row).getEntradesTemporadaActual() + "");
+        } else {
+            InputCoeficient.setText("");
+            InputCaramboles.setText("");
+            InputEntrades.setText("");
         }
     }//GEN-LAST:event_ComboBoxModalitatsActionPerformed
 
