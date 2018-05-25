@@ -45,9 +45,6 @@ public class MainFrame extends javax.swing.JFrame
     private Soci soci = null;
     private int modeSeleccionat = 0;
 
-    /**
-     * Creates new form Main
-     */
     public MainFrame()
     {
         initComponents();
