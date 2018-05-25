@@ -5,6 +5,10 @@
     <class>info.infomila.billar.models.Modalitat</class>
     <class>info.infomila.billar.models.EstadisticaModalitat</class>
     <class>info.infomila.billar.models.Soci</class>
+    <class>info.infomila.billar.models.Torneig</class>
+    <class>info.infomila.billar.models.Grup</class>
+    <class>info.infomila.billar.models.Inscripcio</class>
+    <class>info.infomila.billar.models.Partida</class>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:mysql://127.0.0.1:3306/billars"/>
       <property name="javax.persistence.jdbc.user" value="root"/>
