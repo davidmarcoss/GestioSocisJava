@@ -29,17 +29,21 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.sql.rowset.serial.SerialBlob;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
 
 public class MainFrame extends javax.swing.JFrame
 {
+
     private String className;
     private String nomUnitatPersistencia;
     private IBillar billar = null;
     private List<Soci> socis;
     private Soci soci = null;
+    private int modeSeleccionat = 0;
 
     /**
      * Creates new form Main
@@ -71,44 +75,44 @@ public class MainFrame extends javax.swing.JFrame
         });
 
         ObtenirPropietats();
-        
+
         GetConnexio();
     }
-    
-    private void ObtenirPropietats() 
+
+    private void ObtenirPropietats()
     {
         Properties p = new Properties();
         try {
             p.load(new FileInputStream("propietats.properties"));
         } catch (IOException ex) {
             int result = JOptionPane.showConfirmDialog(rootPane,
-                   "No s'ha pogut llegir el fitxer de propietats, l'aplicació s'abortarà",
-                   "Error",
-                   JOptionPane.DEFAULT_OPTION,
-                   JOptionPane.PLAIN_MESSAGE);
+                    "No s'ha pogut llegir el fitxer de propietats, l'aplicació s'abortarà",
+                    "Error",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
 
-           System.exit(0);
+            System.exit(0);
         }
-        
+
         className = p.getProperty("className");
         if (className == null || className.length() == 0) {
             int result = JOptionPane.showConfirmDialog(rootPane,
-                   "No s'ha pogut llegir la propietat className del fitxer de propietats, l'aplicació s'abortarà",
-                   "Error",
-                   JOptionPane.DEFAULT_OPTION,
-                   JOptionPane.PLAIN_MESSAGE);
+                    "No s'ha pogut llegir la propietat className del fitxer de propietats, l'aplicació s'abortarà",
+                    "Error",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
 
-           System.exit(0);
+            System.exit(0);
         }
         nomUnitatPersistencia = p.getProperty("nomUnitatPersistencia");
         if (nomUnitatPersistencia == null || nomUnitatPersistencia.length() == 0) {
             int result = JOptionPane.showConfirmDialog(rootPane,
-                   "No s'ha pogut llegir la propietat nomUnitatPersistencia del fitxer de propietats, l'aplicació s'abortarà",
-                   "Error",
-                   JOptionPane.DEFAULT_OPTION,
-                   JOptionPane.PLAIN_MESSAGE);
+                    "No s'ha pogut llegir la propietat nomUnitatPersistencia del fitxer de propietats, l'aplicació s'abortarà",
+                    "Error",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
 
-           System.exit(0);
+            System.exit(0);
         }
     }
 
@@ -116,7 +120,7 @@ public class MainFrame extends javax.swing.JFrame
     {
         try {
             billar = BillarFactory.getInstance(className, nomUnitatPersistencia);
-            populateTaula();
+            populateTaula(modeSeleccionat);
         } catch (BillarException ex) {
             try {
                 if (billar != null) {
@@ -135,9 +139,9 @@ public class MainFrame extends javax.swing.JFrame
         }
     }
 
-    private void populateTaula() throws BillarException
+    private void populateTaula(int mode) throws BillarException
     {
-        socis = billar.getSocis();
+        socis = billar.getSocis(mode);
 
         DefaultTableModel model = (DefaultTableModel) TaulaSocis.getModel();
         model.setRowCount(0);
@@ -222,6 +226,7 @@ public class MainFrame extends javax.swing.JFrame
         jScrollPane2 = new javax.swing.JScrollPane();
         TaulaSocis = new javax.swing.JTable();
         CheckBoxActiu = new javax.swing.JCheckBox();
+        ComboBoxFiltres = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -351,6 +356,15 @@ public class MainFrame extends javax.swing.JFrame
 
         CheckBoxActiu.setText("Actiu");
 
+        ComboBoxFiltres.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "TOTS", "Actius", "No actius" }));
+        ComboBoxFiltres.addActionListener(new java.awt.event.ActionListener()
+        {
+            public void actionPerformed(java.awt.event.ActionEvent evt)
+            {
+                ComboBoxFiltresActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -361,7 +375,8 @@ public class MainFrame extends javax.swing.JFrame
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 436, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(BtnCrear))
+                            .addComponent(BtnCrear)
+                            .addComponent(ComboBoxFiltres, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(26, 26, 26)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -413,7 +428,9 @@ public class MainFrame extends javax.swing.JFrame
             .addGroup(layout.createSequentialGroup()
                 .addGap(10, 10, 10)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(ComboBoxFiltres, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(7, 7, 7)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addGroup(layout.createSequentialGroup()
@@ -522,7 +539,7 @@ public class MainFrame extends javax.swing.JFrame
             try {
                 billar.updateSoci(soci);
                 billar.commit();
-                populateTaula();
+                populateTaula(modeSeleccionat);
                 JOptionPane.showMessageDialog(null, "Soci inserit correctament.");
             } catch (BillarException ex) {
                 try {
@@ -548,7 +565,7 @@ public class MainFrame extends javax.swing.JFrame
                 try {
                     billar.updateSoci(soci);
                     billar.commit();
-                    populateTaula();
+                    populateTaula(modeSeleccionat);
                     JOptionPane.showMessageDialog(null, "Soci modificat correctament.");
                 } catch (BillarException ex) {
                     try {
@@ -591,9 +608,9 @@ public class MainFrame extends javax.swing.JFrame
     private void BtnCancelarMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnCancelarMouseClicked
     {//GEN-HEADEREND:event_BtnCancelarMouseClicked
         int result = JOptionPane.showConfirmDialog(rootPane,
-            "Estàs segur que vols cancelar la edició del soci?",
-            "Cancelar edició",
-            JOptionPane.YES_NO_OPTION);
+                "Estàs segur que vols cancelar la edició del soci?",
+                "Cancelar edició",
+                JOptionPane.YES_NO_OPTION);
         if (result == JOptionPane.YES_OPTION) {
             if (soci != null) {
                 populateForm();
@@ -618,6 +635,21 @@ public class MainFrame extends javax.swing.JFrame
             LabelFoto.setIcon(null);
         }
     }//GEN-LAST:event_BtnEliminarFotoMouseClicked
+
+    private void ComboBoxFiltresActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_ComboBoxFiltresActionPerformed
+    {//GEN-HEADEREND:event_ComboBoxFiltresActionPerformed
+        int row = ComboBoxFiltres.getSelectedIndex();
+        modeSeleccionat = row;
+        try {
+            populateTaula(modeSeleccionat);
+        } catch (BillarException ex) {
+            int result = JOptionPane.showConfirmDialog(rootPane,
+                    "No s'ha pogut obtenir la llista de socis",
+                    "Error",
+                    JOptionPane.DEFAULT_OPTION,
+                    JOptionPane.PLAIN_MESSAGE);
+        }
+    }//GEN-LAST:event_ComboBoxFiltresActionPerformed
 
     public void MostrarImatgeLabel(File file)
     {
@@ -730,6 +762,7 @@ public class MainFrame extends javax.swing.JFrame
     private javax.swing.JButton BtnEliminarFoto;
     private javax.swing.JButton BtnGuardar;
     private javax.swing.JCheckBox CheckBoxActiu;
+    private javax.swing.JComboBox<String> ComboBoxFiltres;
     private javax.swing.JComboBox<String> ComboBoxModalitats;
     private javax.swing.JTextField InputCaramboles;
     private javax.swing.JTextField InputCoeficient;
