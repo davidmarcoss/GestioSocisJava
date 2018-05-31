@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 import javax.sql.rowset.serial.SerialBlob;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class MainFrame extends javax.swing.JFrame
 {
@@ -101,6 +102,7 @@ public class MainFrame extends javax.swing.JFrame
 
             System.exit(0);
         }
+        
         nomUnitatPersistencia = p.getProperty("nomUnitatPersistencia");
         if (nomUnitatPersistencia == null || nomUnitatPersistencia.length() == 0) {
             int result = JOptionPane.showConfirmDialog(rootPane,
@@ -508,9 +510,7 @@ public class MainFrame extends javax.swing.JFrame
         boolean actiu = CheckBoxActiu.isSelected();
         Icon icon = LabelFoto.getIcon();
         Blob foto = null;
-        if (icon != null) {
-            foto = ImageToBlob(iconToImage(icon));
-        }
+        if (icon != null) ImageToBlob(iconToImage(icon));
         String passwordmd5 = InputPassword.getText();
         if (passwordmd5 != null && !"".equals(passwordmd5)) {
             MessageDigest dg;
@@ -530,52 +530,59 @@ public class MainFrame extends javax.swing.JFrame
             }
         }
 
-        if (soci == null) {
-            Soci newSoci = new Soci(nif, nom, cognom, cognom2, passwordmd5, foto, actiu);
-            soci = newSoci;
-            try {
-                billar.updateSoci(soci);
-                billar.commit();
-                populateTaula(modeSeleccionat);
-                JOptionPane.showMessageDialog(null, "Soci inserit correctament.");
-            } catch (BillarException ex) {
-                try {
-                    billar.rollback();
-                    System.out.println(ex);
-                    dispose();
-                } catch (BillarException ex1) {
-                    JOptionPane.showMessageDialog(null, ex1);
-                }
-            }
-        } else if (soci != null) {
-            try {
-                soci.setFoto(foto);
-                soci.setNif(InputNIF.getText());
-                soci.setNom(InputNom.getText());
-                soci.setCognom1(InputCognom.getText());
-                soci.setCognom2(InputCognom2.getText());
-                soci.setActiu(CheckBoxActiu.isSelected());
-                if (passwordmd5 != null && !"".equals(passwordmd5)) {
-                    soci.setPasswordHash(passwordmd5);
-                }
-
+        try {
+            if (soci == null) {
+                Soci newSoci = new Soci(nif, nom, cognom, cognom2, passwordmd5, foto, actiu);
+                soci = newSoci;
                 try {
                     billar.updateSoci(soci);
                     billar.commit();
                     populateTaula(modeSeleccionat);
-                    JOptionPane.showMessageDialog(null, "Soci modificat correctament.");
+                    JOptionPane.showMessageDialog(rootPane, "Soci inserit correctament.");
                 } catch (BillarException ex) {
                     try {
                         billar.rollback();
-                        System.out.println(ex);
-                        dispose();
+                        populateTaula(modeSeleccionat);
+                        JOptionPane.showMessageDialog(rootPane, "Ja hi ha un soci amb aquest DNI");
                     } catch (BillarException ex1) {
-                        JOptionPane.showMessageDialog(null, "ex1");
+                        JOptionPane.showMessageDialog(null, ex1);
                     }
                 }
-            } catch (SociException sociException) {
-                JOptionPane.showMessageDialog(null, sociException.getMessage());
+            } else if (soci != null) {
+                try {
+                    String lastDNI = InputNIF.getText();
+                    soci.setFoto(foto);
+                    soci.setNif(InputNIF.getText());
+                    soci.setNom(InputNom.getText());
+                    soci.setCognom1(InputCognom.getText());
+                    soci.setCognom2(InputCognom2.getText());
+                    soci.setActiu(CheckBoxActiu.isSelected());
+                    if (passwordmd5 != null && !"".equals(passwordmd5)) {
+                        soci.setPasswordHash(passwordmd5);
+                    }
+
+                    try {
+                        billar.updateSoci(soci);
+                        billar.commit();
+                        populateTaula(modeSeleccionat);
+                        JOptionPane.showMessageDialog(rootPane, "Soci modificat correctament.");
+                    } catch (BillarException ex) {
+                        try {
+                            billar.rollback();
+                            soci.setNif(lastDNI);
+                            populateTaula(modeSeleccionat);
+                            JOptionPane.showMessageDialog(rootPane, "Ja hi ha un soci amb aquest DNI");
+                        } catch (BillarException ex1) {
+                            JOptionPane.showMessageDialog(rootPane, "Error al fer el Rollback, abortant aplicació...");
+                            dispose();
+                        }
+                    }
+                } catch (SociException sociException) {
+                    JOptionPane.showMessageDialog(null, sociException.getMessage());
+                }
             }
+        } catch (Exception ex ) {
+            
         }
 
         InputPassword.setText("");
@@ -620,6 +627,7 @@ public class MainFrame extends javax.swing.JFrame
     private void BtnCambiarFotoMouseClicked(java.awt.event.MouseEvent evt)//GEN-FIRST:event_BtnCambiarFotoMouseClicked
     {//GEN-HEADEREND:event_BtnCambiarFotoMouseClicked
         JFileChooser fc = new JFileChooser();
+        fc.addChoosableFileFilter(new FileNameExtensionFilter("Images", "jpg", "png", "gif", "bmp"));
         if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
             MostrarImatgeLabel(file);
