@@ -40,7 +40,7 @@ public class MainFrame extends javax.swing.JFrame
 {
 
     private String className;
-    private String nomUnitatPersistencia;
+    private String hibernateConfig;
     private IBillar billar = null;
     private List<Soci> socis;
     private Soci soci = null;
@@ -81,7 +81,7 @@ public class MainFrame extends javax.swing.JFrame
     {
         Properties p = new Properties();
         try {
-            p.load(new FileInputStream("propietats.properties"));
+            p.load(new FileInputStream("config.properties"));
         } catch (IOException ex) {
             int result = JOptionPane.showConfirmDialog(rootPane,
                     "No s'ha pogut llegir el fitxer de propietats, l'aplicació s'abortarà",
@@ -103,10 +103,10 @@ public class MainFrame extends javax.swing.JFrame
             System.exit(0);
         }
         
-        nomUnitatPersistencia = p.getProperty("nomUnitatPersistencia");
-        if (nomUnitatPersistencia == null || nomUnitatPersistencia.length() == 0) {
+        hibernateConfig = p.getProperty("hibernateConfig");
+        if (hibernateConfig == null || hibernateConfig.length() == 0) {
             int result = JOptionPane.showConfirmDialog(rootPane,
-                    "No s'ha pogut llegir la propietat nomUnitatPersistencia del fitxer de propietats, l'aplicació s'abortarà",
+                    "No s'ha pogut llegir la propietat hibernateConfig del fitxer de propietats, l'aplicació s'abortarà",
                     "Error",
                     JOptionPane.DEFAULT_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
@@ -118,7 +118,7 @@ public class MainFrame extends javax.swing.JFrame
     private void GetConnexio()
     {
         try {
-            billar = BillarFactory.getInstance(className, nomUnitatPersistencia);
+            billar = BillarFactory.getInstance(className, hibernateConfig);
             populateTaula(modeSeleccionat);
         } catch (BillarException ex) {
             try {
@@ -510,7 +510,7 @@ public class MainFrame extends javax.swing.JFrame
         boolean actiu = CheckBoxActiu.isSelected();
         Icon icon = LabelFoto.getIcon();
         Blob foto = null;
-        if (icon != null) ImageToBlob(iconToImage(icon));
+        if (icon != null) foto = ImageToBlob(iconToImage(icon));
         String passwordmd5 = InputPassword.getText();
         if (passwordmd5 != null && !"".equals(passwordmd5)) {
             MessageDigest dg;

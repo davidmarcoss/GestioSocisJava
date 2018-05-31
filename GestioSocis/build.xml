@@ -10,6 +10,31 @@
 <project name="GestioSocis" default="default" basedir=".">
     <description>Builds, tests, and runs the project GestioSocis.</description>
     <import file="nbproject/build-impl.xml"/>
+    
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+	<classpath>
+		<pathelement location="lib/ant-contrib-1.0b3.jar"/>
+	</classpath>
+    </taskdef>
+
+    <target name="afegirJarAlJar">
+	<property file="nbproject/project.properties" />
+	<zip destfile="${dist.jar}" update="true">
+		<zipfileset src="${unJar}" excludes="META-INF" />
+	</zip>
+    </target>
+    
+    <target name="FerInstalador" depends="init, jar" description="instalar">
+        <copy file="config.properties" todir="${dist.dir}"/>
+        <copy file="hibernate.properties" todir="${dist.dir}"/>
+        <foreach target="afegirJarAlJar" param="unJar">
+            <fileset dir="dist/lib" casesensitive="yes">
+                    <include name="**/*.jar"/>
+            </fileset>
+        </foreach>
+    </target>
+    
+    
     <!--
 
     There exist several targets which are by default empty and which can be 
